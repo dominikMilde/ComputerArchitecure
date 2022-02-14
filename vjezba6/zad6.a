@@ -1,0 +1,82 @@
+			ORG		0
+			MOV		R13, #81<8   						;spranca za omogucavanje prekida
+			MRS		R7, CPSR
+			BIC		R7, R7, #80
+			MSR		CPSR_c, R7
+			B		MAIN						
+			
+			;prekidni potprogram na adr 18
+			ORG 	18
+INTERR		STMFD 	R13!, {R0, R3, R4, R6, R14}			;spremi kontekst
+			STR		R1, [R1, #8]						;brisanje BS-a
+			AND		R0, R0, #0								;resetiraj brojac
+			STR		R0, [R1, #0C]
+			MOV 	R0, #0D		
+			BL		LCDWR						;D je brisanje unutra
+			MOV		R6, #2							;counter
+			MOV		R0, #3E	
+										;znak <							
+PRINT_ST	BL		LCDWR
+			SUBS	R6, R6, #1
+			BGT		PRINT_ST
+			BL		LCDWR
+SKOK		LDR		R3,	INDEX
+			ADD		R3, R3, #4<8						;INDEX + 400 je adresa
+			LDRB	R0, [R3]							;u R2 je kod
+			MOV		R4, R0								; kopiraj u R4
+			CMP 	R0, #0
+			STREQ	R0, INDEX
+			BEQ		SKOK
+			
+			BL		LCDWR
+
+ZNAK_VEC	MOV		R6, #3								;counter
+			MOV		R0, #3C								;znak >
+			
+PRINT_ND	BL		LCDWR
+			SUBS 	R6, R6, #1
+			BGT		PRINT_ND
+			
+			MOV		R0, #0A								;ispisi na ekran
+			BL		LCDWR
+			
+			SUB		R3, R3, #4<8
+			CMP		R4, #0
+			ANDEQ	R3, R3, #0								;skoci na pocetak
+ZNAK_MAN	ADDNE	R3, R3, #1							;nastavi
+			STR		R3, INDEX
+			
+			LDMFD	R13!, {R0, R3, R4, R6, R14}
+			
+KRAJ_PR		SUBS	PC, LR, #4
+
+LCDWR		STMFD	R13!, {R0}
+			CMP		R0, #0
+			BEQ		PREP
+			
+			AND		R0, R0, #7F						;ASCII je 7 bitni, b[7] = 0
+			STRB 	R0, [R2, #4]					
+			
+			ORR		R0, R0, #80						;postavi bit[7] na jedan
+			STRB	R0, [R2, #4]					
+			
+			AND		R0, R0, #80						;postavi na nulu
+			STRB	R0, [R2, #4]
+PREP		LDMFD	R13!, {R0}
+OUT			MOV		PC, LR
+
+MAIN		LDR		R1, RTC_ADR						;R1 je pointer na RTC
+			LDR		R2, GPIO_ADR					;R2 je pointer na UI jed.
+			MOV		R0, #1							
+			STR		R0, [R1, #10]					;omoguci post. interrupta
+			MOV		R0, #1<8						;postavi 256 na RTC
+			STR		R0, [R1, #4]					;		-||-
+LOOP		B 		LOOP
+
+
+RTC_ADR		DW		FFFFFE00
+GPIO_ADR	DW		FFFFFF00
+INDEX		DW		0
+
+			ORG 	400
+			DB		49, 6E, 74, 65, 72, 6E, 61, 74, 69, 6F, 6E, 61, 6C, 69, 73, 61, 74, 69, 6F, 6E, 0

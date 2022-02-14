@@ -1,0 +1,66 @@
+BVJ		EQU FFFF1000
+
+UVJ_D   EQU FFFF2000
+UVJ_B   EQU FFFF2004
+
+PVJ_D   EQU FFFF3000
+PVJ_A   EQU FFFF3004
+PVJ_E   EQU FFFF3008
+PVJ_S   EQU FFFF300C
+
+		ORG     0
+        MOVE 	10000, SP
+        JP 		GLAVNI
+
+        ORG	 	8
+        DW 		500; prekidni vektor
+
+GLAVNI  MOVE    %B 10000, SR
+        MOVE    1, R0
+        STORE   R0, (PVJ_S) ; omoguci da prekidna generira prekide
+PETLJA  LOAD    R0, (UVJ_B)
+        CMP     R0, 0
+        JP_EQ   PETLJA
+UCITAJ  LOAD    R1, (BROJ)
+        STORE   R1, (UVJ_D)
+        LOAD    R0, (BROJAC)
+        ADD             R0, 1, R0
+        STORE   R0, (BROJAC)
+        STORE   R0, (UVJ_B)
+        JP      PETLJA
+     ;prekidni vektor
+		ORG     500
+        PUSH    R0
+        PUSH    R1
+        MOVE    SR, R0
+        PUSH    R0
+       ;spremanje konteksta
+		STORE   R0, (PVJ_A)
+		LOAD    R0, (BVJ)
+        CMP             R0, 0
+        JP_SLT  ZABRANI;
+		PUSH    R0
+		CALL    OBRADI
+		ADD     SP, 4, SP
+		STORE   R0, (BROJ)
+		LOAD    R0, (BROJAC)
+		STORE   R0, (PVJ_D)
+		STORE   R0, (PVJ_E)
+		POP     R0
+		MOVE    R0, SR
+		POP     R1
+        POP     R0
+        RETI
+
+OBRADI  LOAD    R2, (SP+4)
+        MOVE    1, R0
+        SHL     R0, R2, R0
+VAN     RET
+
+ZABRANI MOVE    %B 000000, SR
+        MOVE    0, R0
+        STORE   R0, (PVJ_S)
+        HALT
+
+BROJ    DW      0
+BROJAC  DW      0

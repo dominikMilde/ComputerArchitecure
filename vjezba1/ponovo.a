@@ -1,0 +1,39 @@
+		MOVE	500, R0; poiinter na pocetakkkkkkk ulaza
+		MOVE 	1000, R1; poiunter na pocetak izlaza
+		LOAD 	R3, (R0);
+		ADD 	R0, 4, R0
+	
+PETLJA 	LOADH 	R2, (R0)
+		SHL 	R2, 11, R4; za provjeru predznaka
+		JP_C 	NEG
+		JP_NC 	POZ
+DALJE 	ADD 	R0, 2, R0
+		ADD 	R1, 1, R1
+		SUB 	R3, 1, R3
+		JP_NZ 	PETLJA
+		JP 		KRAJ
+
+NEG		MOVE 	0FFFF, R5
+		SHL 	R5, 10, R5
+		ADD 	R5, 7FFF, R5
+		AND 	R2, R5, R2
+		CMP 	R2, %D 128
+		JP_UGT 	IZVAN
+		XOR 	R2, -1, R2
+		ADD 	R2, 1, R2
+		STOREB 	R2, (R1)
+		JP 		DALJE
+		
+POZ 	CMP 	R2, %D 127
+		JP_UGT 	IZVAN
+		STOREB 	R2, (R1)
+		JP 		DALJE
+		
+IZVAN 	MOVE 	80, R2;
+		STOREB 	R2, (R1)
+		JP 		DALJE
+		
+KRAJ 	HALT
+ORG 	500
+PODACI 	DW 6
+		DH 8001, 0002, 0123, 0025, 82BC, 8021

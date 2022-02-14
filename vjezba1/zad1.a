@@ -1,0 +1,42 @@
+	MOVE 500, R0; pokazivac na pocetak ulaznog bloka
+	MOVE 1000, R1; pokazivac na odrediste
+	LOAD R2, (R0); counter
+	ADD R0, 4, R0
+
+PETLJA CMP R2, 0
+	JP_EQ KRAJ
+	LOADH R3, (R0); npr prvi je na 504
+	ROTL R3, 11, R4
+	JP_C NEG
+	JP_NC POZ
+	
+POZ CMP R3, %D 127
+	JP_UGT IZVAN
+	STOREB R3, (R1)
+	JP DALJE
+
+NEG 
+	LOAD R5, (MASKA)
+	AND R3, R5, R3
+	CMP R3, %D 128
+	JP_UGT IZVAN
+	XOR R3, -1, R3
+	ADD R3, 1, R3
+	STOREB R3, (R1)
+	JP DALJE
+
+IZVAN MOVE 80, R3
+	STOREB R3, (R1)
+	JP DALJE
+	
+DALJE ADD R0, 2, R0
+	ADD R1, 1, R1
+	SUB R2, 1, R2
+	JP PETLJA
+	
+KRAJ HALT
+
+	ORG 500 
+	DW 6
+	DH 8001, 0002, 0123, 0025
+MASKA DW FFFF7FFF

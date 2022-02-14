@@ -1,0 +1,73 @@
+                       CTCR `EQU 0FFFF0000 
+                       CTLR `EQU 0FFFF0004 
+                       CTCLR `EQU 0FFFF0008 
+                       CTEND `EQU 0FFFF000C 
+                        
+                       DMASRC `EQU 0FFFF1000 
+                       DMADEST `EQU 0FFFF1004 
+                       DMASIZE `EQU 0FFFF1008 
+                       DMACTRL `EQU 0FFFF100C 
+                       DMASTAR `EQU 0FFFF1010 
+                       DMAACK `EQU 0FFFF1014 
+                        
+                       BVJ `EQU 0FFFFFFFC 
+                        
+                       `ORG 0 
+00000000  00 00 81 07  		MOVE	10000, SP 
+00000004  58 00 00 C4  		JP		GLAVNI 
+                       		 
+                       		;prekidni potprogram 
+                       `ORG 0C 
+0000000C  00 00 00 88  		PUSH 	R0 
+00000010  00 00 20 00  		MOVE 	SR, R0 
+00000014  00 00 00 88  		PUSH 	R0 
+00000018  00 00 80 88  		PUSH 	R1 
+                       		;STORE	R0, (CTCLR) 
+0000001C  14 10 0F B8  		STORE	R0, (DMAACK) 
+00000020  C4 00 00 B0  		LOAD	R0, (ADRESA) 
+00000024  24 00 00 24  		ADD		R0, 24, R0 
+00000028  FF FF 8F 04  		MOVE	-1, R1 
+0000002C  00 00 80 BC  		STORE	R1, (R0) 
+00000030  04 00 00 24  		ADD		R0, 4, R0 
+00000034  C4 00 00 B8  		STORE	R0, (ADRESA) 
+00000038  C0 00 00 B0  		LOAD	R0, (BLOKOVI) 
+0000003C  01 00 00 24  		ADD		R0, 1, R0 
+00000040  C0 00 00 B8  		STORE	R0, (BLOKOVI) 
+00000044  00 00 80 80  		POP		R1 
+00000048  00 00 00 80  		POP		R0 
+0000004C  00 00 10 00  		MOVE 	R0, SR 
+00000050  00 00 00 80  		POP 	R0 
+                       		 
+00000054  03 00 00 D8  		RETN 
+                       		 
+00000058  E8 03 00 04  GLAVNI	MOVE 	%D 1000, R0 
+0000005C  04 00 0F B8  		STORE 	R0, (CTLR) 
+00000060  01 00 00 04  		MOVE	%B 01, R0 
+00000064  00 00 0F B8  		STORE 	R0, (CTCR) ;pokreni brojanje 
+00000068  C0 00 00 B0  PETLJA	LOAD 	R0, (BLOKOVI) 
+0000006C  05 00 00 6C  		CMP 	R0, 5 
+00000070  B0 00 C0 C5  		JP_EQ	KRAJ 
+00000074  08 00 0F B0  CHECK	LOAD	R0, (CTCLR) 
+00000078  00 00 00 6C  		CMP 	R0, 0 
+0000007C  68 00 C0 C5  		JP_EQ	PETLJA 
+                       		;inace inicializacija DMA 
+00000080  08 00 0F B8  INIT	STORE 	R0, (CTCLR) 
+00000084  FC FF 0F 04  		MOVE 	BVJ, R0 
+00000088  00 10 0F B8  		STORE	R0, (DMASRC) 
+0000008C  C4 00 00 B0  		LOAD 	R0, (ADRESA) 
+00000090  04 10 0F B8  		STORE	R0, (DMADEST) 
+00000094  09 00 00 04  		MOVE 	9, R0 
+00000098  08 10 0F B8  		STORE	R0, (DMASIZE) 
+0000009C  07 00 00 04  		MOVE 	%B 0111, R0 
+000000A0  0C 10 0F B8  		STORE 	R0, (DMACTRL) 
+000000A4  10 10 0F B8  RUNDMA	STORE	R0, (DMASTAR); pokretanje DMA prijenosa 
+000000A8  0C 00 0F B8  		STORE	R0, (CTEND) 
+000000AC  68 00 00 C4  		JP		PETLJA 
+                        
+000000B0  00 00 00 04  KRAJ	MOVE 	0, R0 
+000000B4  00 00 0F B8  		STORE	R0, (CTCR) 
+000000B8  0C 10 0F B8  		STORE	R0, (DMACTRL) 
+000000BC  00 00 00 F8  		HALT 
+                       		 
+000000C0  00 00 00 00  BLOKOVI `DW 00,00,00,00 
+000000C4  00 10 00 00  ADRESA `DW 00,10,00,00 
